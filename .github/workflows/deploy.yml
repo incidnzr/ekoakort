@@ -1,55 +1,31 @@
-name: Deploy to GitHub Pages
+name: Deploy Next.js to GitHub Pages
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
-# GLOBAL ENVIRONMENT VARIABLES
-env:
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
 permissions:
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    # JOB SEVİYESİNDE ENVIRONMENT VARIABLES
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: 'npm'
           
       - name: Install dependencies
         run: npm ci
         
-      # ÖNEMLİ: Artık sadece build çalıştır
       - name: Build
         run: npm run build
-        
-      # .nojekyll dosyası oluştur
-      - name: Create .nojekyll
-        run: |
-          touch out/.nojekyll
-          echo "GitHub Pages Jekyll disabled" >> out/.nojekyll
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
