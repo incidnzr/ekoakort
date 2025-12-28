@@ -1,0 +1,19 @@
+Project name: eko-akort (ya da istediğin bir isim)
+
+Database Password: EkoAkort123! (bu şifreyi not et)
+
+Project API
+Your API is secured behind an API gateway which requires an API Key for every request.
+You can use the parameters below to use Supabase client libraries.
+
+Project URL
+https://jijwmwckbhetekzmlgdt.supabase.co
+
+Copy
+A RESTful endpoint for querying and managing your database.
+
+Publishable API Key
+sb_publishable_RRSgYRkTZYw7WPQIIpQuUQ_mRSGOU7W
+
+Copy
+This key is safe to use in a browser if you have enabled Row Level Security (RLS) for your tables and configured policies. You may also use the secret key which can be found here to bypass RLS.
