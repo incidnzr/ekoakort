@@ -6,7 +6,7 @@ const nextConfig = {
   },
   trailingSlash: true,
   // Base path ayarı (repo adına göre)
-  basePath: process.env.NODE_ENV === 'production' ? '/eko-akort' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/ekoakort' : '',
 }
 
 module.exports = nextConfig

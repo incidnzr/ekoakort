@@ -1,4 +1,4 @@
-Project name: eko-akort (ya da istediğin bir isim)
+Project name: ekoakort (ya da istediğin bir isim)
 
 Database Password: EkoAkort123! (bu şifreyi not et)
 

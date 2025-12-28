@@ -9,7 +9,7 @@
     "export": "next build && next export",
     "deploy": "npm run export && gh-pages -d out"
   },
-  "homepage": "https://denizermustafa.github.io/eko-akort",
+  "homepage": "https://incidenizer.github.io/ekoakort",
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
     "lucide-react": "^0.562.0",

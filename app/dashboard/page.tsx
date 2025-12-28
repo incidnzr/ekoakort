@@ -553,7 +553,7 @@ export default function DashboardPage() {
       setLastCounterValue(null);
       setLastCounterDate(null);
     }
-  } catch (error) {
+  } catch (error : any) {
     console.error("Son sayaç değeri alınamadı:", error);
     setLastCounterValue(null);
     setLastCounterDate(null);
@@ -596,7 +596,7 @@ export default function DashboardPage() {
 
         setPersonalizedTips(tipsWithPoints);
       }
-    } catch (error) {
+    } catch (error : any) {
       console.error("Öneriler yüklenemedi:", error);
     }
   };
@@ -655,7 +655,7 @@ export default function DashboardPage() {
           totalInBuilding: rankedUsers.length,
         }));
       }
-    } catch (error) {
+    } catch (error : any) {
       console.error("Liderlik tablosu yüklenemedi:", error);
     }
   };
@@ -715,7 +715,7 @@ export default function DashboardPage() {
       } else if (typeof company.discount_tiers === 'string') {
         discountTiers = JSON.parse(company.discount_tiers);
       }
-    } catch (error) {
+    } catch (error : any) {
       console.warn(`Discount tiers parse hatası for ${company.name}:`, error);
     }
     
@@ -815,7 +815,7 @@ export default function DashboardPage() {
         return { success: true };
       }
       return data;
-    } catch (error) {
+    } catch (error : any) {
       console.error("Puan güncelleme hatası:", error);
       throw error;
     }
@@ -840,7 +840,7 @@ export default function DashboardPage() {
           console.log("✅ Cache sync başarılı");
         }
       }
-    } catch (error) {
+    } catch (error : any) {
       console.error("Sync hatası:", error);
     }
   };
@@ -977,21 +977,21 @@ const fetchDashboardData = async () => {
         );
         setStats((prev) => ({ ...prev, totalPoints }));
       }
-    } catch (error) {
+    } catch (error : any) {
       console.error("Company discounts hesaplama hatası:", error);
     }
 
     // 5. LİDERLİK VERİSİNİ ÇEK
     try {
       await fetchBuildingLeaderboard(userData);
-    } catch (error) {
+    } catch (error : any) {
       console.error("Liderlik verisi hatası:", error);
     }
 
     // 6. ÖNERİLERİ ÇEK
     try {
       await fetchPersonalizedTips(userData.id);
-    } catch (error) {
+    } catch (error : any) {
       console.error("Öneriler hatası:", error);
     }
 
@@ -1002,10 +1002,10 @@ const fetchDashboardData = async () => {
         stats.monthlyPoints,
         stats.totalPoints
       );
-    } catch (error) {
+    } catch (error : any) {
       console.error("Puan güncelleme hatası:", error);
     }
-  } catch (error) {
+  } catch (error : any) {
     console.error("Dashboard verisi yüklenemedi:", error);
   } finally {
     setLoading(false);
@@ -1111,7 +1111,7 @@ const fetchDashboardData = async () => {
 
       // Yeni öneri getir
       await fetchPersonalizedTips(userData.id);
-    } catch (error) {
+    } catch (error : any) {
       console.error("Öneri uygulanamadı:", error);
       alert("Öneri uygulanırken bir hata oluştu.");
     }
