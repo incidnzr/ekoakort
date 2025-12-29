@@ -34,7 +34,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>({});
-  
+
   // Tablolar için state'ler
   const [streets, setStreets] = useState<any[]>([]);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -57,7 +57,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             .order("name");
           setStreets(streetsData || []);
           break;
-          
+
         case "buildings":
           const { data: buildingsData } = await supabase
             .from("buildings")
@@ -65,7 +65,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             .order("name");
           setBuildings(buildingsData || []);
           break;
-          
+
         case "companies":
           const { data: companiesData } = await supabase
             .from("companies")
@@ -73,7 +73,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             .order("name");
           setCompanies(companiesData || []);
           break;
-          
+
         case "users":
           const { data: usersData } = await supabase
             .from("users")
@@ -82,7 +82,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             .limit(50);
           setUsers(usersData || []);
           break;
-          
+
         case "consumptions":
           const { data: consumptionsData } = await supabase
             .from("consumptions")
@@ -91,7 +91,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             .limit(100);
           setConsumptions(consumptionsData || []);
           break;
-          
+
         default:
           // Dashboard için tüm istatistikleri getir
           const [
@@ -101,7 +101,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             { count: usersCount },
             { count: consumptionsCount },
             { data: waterData },
-            { data: electricityData }
+            { data: electricityData },
           ] = await Promise.all([
             supabase.from("streets").select("*", { count: "exact" }),
             supabase.from("buildings").select("*", { count: "exact" }),
@@ -109,12 +109,23 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             supabase.from("users").select("*", { count: "exact" }),
             supabase.from("consumptions").select("*", { count: "exact" }),
             supabase.from("consumptions").select("water_amount").limit(1000),
-            supabase.from("consumptions").select("electricity_amount").limit(1000)
+            supabase
+              .from("consumptions")
+              .select("electricity_amount")
+              .limit(1000),
           ]);
-          
-          const totalWater = waterData?.reduce((sum, item) => sum + (item.water_amount || 0), 0) || 0;
-          const totalElectricity = electricityData?.reduce((sum, item) => sum + (item.electricity_amount || 0), 0) || 0;
-          
+
+          const totalWater =
+            waterData?.reduce(
+              (sum, item) => sum + (item.water_amount || 0),
+              0
+            ) || 0;
+          const totalElectricity =
+            electricityData?.reduce(
+              (sum, item) => sum + (item.electricity_amount || 0),
+              0
+            ) || 0;
+
           setData({
             streetsCount,
             buildingsCount,
@@ -122,7 +133,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             usersCount,
             consumptionsCount,
             totalWater: Math.round(totalWater * 100) / 100,
-            totalElectricity: Math.round(totalElectricity * 100) / 100
+            totalElectricity: Math.round(totalElectricity * 100) / 100,
           });
       }
     } catch (error) {
@@ -146,11 +157,13 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {streets.map(street => (
+              {streets.map((street) => (
                 <tr key={street.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-6">{street.id}</td>
                   <td className="py-3 px-6 font-medium">{street.name}</td>
-                  <td className="py-3 px-6">{new Date(street.created_at).toLocaleDateString("tr-TR")}</td>
+                  <td className="py-3 px-6">
+                    {new Date(street.created_at).toLocaleDateString("tr-TR")}
+                  </td>
                   <td className="py-3 px-6">
                     <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
                       <Edit2 className="w-4 h-4" />
@@ -161,7 +174,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             </tbody>
           </table>
         );
-        
+
       case "buildings":
         return (
           <table className="w-full">
@@ -173,7 +186,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {buildings.map(building => (
+              {buildings.map((building) => (
                 <tr key={building.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-6 font-medium">{building.name}</td>
                   <td className="py-3 px-6">{building.streets?.name}</td>
@@ -187,9 +200,74 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             </tbody>
           </table>
         );
-        
-      // Diğer tablolar için benzer yapılar...
-      
+
+      // users tablosu için render
+      case "users":
+        return (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-6 text-left">ID</th>
+                <th className="py-3 px-6 text-left">İsim</th>
+                <th className="py-3 px-6 text-left">Email</th>
+                <th className="py-3 px-6 text-left">Apartman</th>
+                <th className="py-3 px-6 text-left">Kayıt Tarihi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b hover:bg-gray-50">
+                  <td className="py-3 px-6">{user.id}</td>
+                  <td className="py-3 px-6 font-medium">{user.name || "-"}</td>
+                  <td className="py-3 px-6">{user.email || "-"}</td>
+                  <td className="py-3 px-6">
+                    {user.apartments?.[0]?.buildings?.name || "-"} /
+                    {user.apartments?.[0]?.buildings?.streets?.name || "-"}
+                  </td>
+                  <td className="py-3 px-6">
+                    {new Date(user.created_at).toLocaleDateString("tr-TR")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+
+      // consumptions tablosu için
+      case "consumptions":
+        return (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-6 text-left">Tarih</th>
+                <th className="py-3 px-6 text-left">Kullanıcı</th>
+                <th className="py-3 px-6 text-left">Su (m³)</th>
+                <th className="py-3 px-6 text-left">Elektrik (kWh)</th>
+                <th className="py-3 px-6 text-left">Toplam (₺)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {consumptions.map((cons) => (
+                <tr key={cons.id} className="border-b hover:bg-gray-50">
+                  <td className="py-3 px-6">
+                    {new Date(cons.created_at).toLocaleDateString("tr-TR")}
+                  </td>
+                  <td className="py-3 px-6">{cons.users?.name || "-"}</td>
+                  <td className="py-3 px-6">{cons.water_amount || 0}</td>
+                  <td className="py-3 px-6">{cons.electricity_amount || 0}</td>
+                  <td className="py-3 px-6 font-medium">
+                    {(
+                      (cons.water_amount || 0) * 10 +
+                      (cons.electricity_amount || 0) * 2
+                    ).toFixed(2)}{" "}
+                    ₺
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+
       default:
         return null;
     }
@@ -207,7 +285,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               <p className="text-gray-600 text-sm">Sistem Yönetimi</p>
             </div>
           </div>
-          
+
           <button
             onClick={onLogout}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center"
@@ -216,7 +294,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             Çıkış
           </button>
         </div>
-        
+
         {/* Tabs */}
         <div className="flex border-t">
           {[
@@ -227,7 +305,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             { id: "users", icon: Users, label: "Kullanıcılar" },
             { id: "consumptions", icon: Database, label: "Tüketimler" },
             { id: "settings", icon: Settings, label: "Ayarlar" },
-          ].map(tab => (
+          ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -257,57 +335,69 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               <div className="flex items-center">
                 <Building className="w-10 h-10 text-blue-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.streetsCount || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.streetsCount || 0}
+                  </div>
                   <div className="text-gray-500">Sokak</div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow border">
               <div className="flex items-center">
                 <Home className="w-10 h-10 text-green-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.buildingsCount || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.buildingsCount || 0}
+                  </div>
                   <div className="text-gray-500">Apartman</div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow border">
               <div className="flex items-center">
                 <Users className="w-10 h-10 text-purple-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.usersCount || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.usersCount || 0}
+                  </div>
                   <div className="text-gray-500">Kullanıcı</div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow border">
               <div className="flex items-center">
                 <Database className="w-10 h-10 text-yellow-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.consumptionsCount || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.consumptionsCount || 0}
+                  </div>
                   <div className="text-gray-500">Kayıt</div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow border">
               <div className="flex items-center">
                 <Droplets className="w-10 h-10 text-blue-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.totalWater || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.totalWater || 0}
+                  </div>
                   <div className="text-gray-500">Toplam Su (m³)</div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow border">
               <div className="flex items-center">
                 <Zap className="w-10 h-10 text-yellow-500 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{data.totalElectricity || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {data.totalElectricity || 0}
+                  </div>
                   <div className="text-gray-500">Toplam Elektrik (kWh)</div>
                 </div>
               </div>
@@ -325,7 +415,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   {activeTab === "consumptions" && "Tüketim Kayıtları"}
                   {activeTab === "settings" && "Ayarlar"}
                 </h2>
-                
+
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={fetchDashboardData}
@@ -333,7 +423,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   >
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  
+
                   {activeTab !== "settings" && activeTab !== "dashboard" && (
                     <button className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center">
                       <Plus className="w-4 h-4 mr-2" />
@@ -343,10 +433,8 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </div>
               </div>
             </div>
-            
-            <div className="p-6">
-              {renderTable()}
-            </div>
+
+            <div className="p-6">{renderTable()}</div>
           </div>
         )}
       </div>
