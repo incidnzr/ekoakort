@@ -221,8 +221,9 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   <td className="py-3 px-6 font-medium">{user.name || "-"}</td>
                   <td className="py-3 px-6">{user.email || "-"}</td>
                   <td className="py-3 px-6">
-                    {user.apartments?.[0]?.buildings?.name || "-"} /
-                    {user.apartments?.[0]?.buildings?.streets?.name || "-"}
+                    {user.apartments?.buildings?.streets?.name || "-"} /
+                    {user.apartments?.buildings?.name || "-"} /
+                    {user.apartments?.number || "-"}
                   </td>
                   <td className="py-3 px-6">
                     {new Date(user.created_at).toLocaleDateString("tr-TR")}
@@ -261,6 +262,80 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                       (cons.electricity_amount || 0) * 2
                     ).toFixed(2)}{" "}
                     ₺
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+
+      // companies tablosu için
+      case "companies":
+        return (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-6 text-left">Şirket</th>
+                <th className="py-3 px-6 text-left">Tip</th>
+                <th className="py-3 px-6 text-left">İndirim Tiers</th>
+                <th className="py-3 px-6 text-left">Sözleşmeli</th>
+                <th className="py-3 px-6 text-left">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {companies.map((company) => (
+                <tr key={company.id} className="border-b hover:bg-gray-50">
+                  <td className="py-3 px-6">
+                    <div className="font-medium">{company.name}</div>
+                    <div className="text-sm text-gray-500">{company.code}</div>
+                  </td>
+                  <td className="py-3 px-6">
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        company.utility_type === "water"
+                          ? "bg-blue-100 text-blue-800"
+                          : company.utility_type === "electricity"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {company.utility_type === "water"
+                        ? "Su"
+                        : company.utility_type === "electricity"
+                        ? "Elektrik"
+                        : "Diğer"}
+                    </span>
+                  </td>
+                  <td className="py-3 px-6">
+                    <div className="space-y-1">
+                      {company.discount_tiers?.map((tier: any, idx: number) => (
+                        <div key={idx} className="flex items-center text-xs">
+                          <span className="w-16">{tier.min_points} puan:</span>
+                          <span className="font-medium ml-2">
+                            {tier.discount_percent}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="py-3 px-6">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                        company.is_contracted
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {company.is_contracted ? "✓ Sözleşmeli" : "✗ Değil"}
+                    </span>
+                  </td>
+                  <td className="py-3 px-6">
+                    <button className="p-1 text-blue-600 hover:bg-blue-50 rounded mr-2">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button className="p-1 text-red-600 hover:bg-red-50 rounded">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
