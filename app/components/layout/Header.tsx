@@ -19,7 +19,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("ekoakort_user");
-    window.location.href = "/login";
+    window.location.href = "login";
   };
 
   // Login sayfasında header gösterme
