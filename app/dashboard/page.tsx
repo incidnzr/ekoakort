@@ -660,7 +660,7 @@ export default function DashboardPage() {
     }
   };
 
-  const calculateCompanyDiscounts = async (
+  const calculateCompanyDiscounts_X = async (
   userData: any,
   subscriptions: UserSubscription[],
   consumptions: Consumption[]
@@ -783,6 +783,151 @@ export default function DashboardPage() {
     });
   }
 
+  return discounts;
+};
+
+const calculateCompanyDiscounts = async (
+  userData: any,
+  subscriptions: UserSubscription[],
+  consumptions: Consumption[]
+): Promise<CompanyDiscount[]> => {
+  const discounts: CompanyDiscount[] = [];
+  const currentMonth = getCurrentMonthYear(); // "2025-12"
+
+  for (const subscription of subscriptions) {
+    const company = subscription.companies?.[0];
+    if (!company) continue;
+
+    // 1. BU AYKİ TÜKETİMLERİ ve PUANLARI TOPLA
+    const monthlyConsumptions = consumptions.filter((cons) => {
+      if (cons.subscription_id !== subscription.id) return false;
+      const date = new Date(cons.created_at);
+      const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}`;
+      return monthYear === currentMonth;
+    });
+
+    // 2. BU AYKİ TOPLAM PUANI HESAPLA
+    let monthlyPoints = 0;
+    if (monthlyConsumptions.length > 0) {
+      monthlyPoints = monthlyConsumptions.reduce(
+        (sum, cons) => sum + (cons.monthly_points || 0),
+        0
+      );
+
+      // Sözleşmeli firma bonusu (+20%)
+      if (company.is_contracted) {
+        monthlyPoints = Math.round(monthlyPoints * 1.2);
+      }
+    }
+
+    console.log(`${company.name} - Bu ayki puan: ${monthlyPoints}`);
+
+    // 3. TOPLAM PUANI HESAPLA
+    const totalConsumptions = consumptions.filter(
+      (c) => c.subscription_id === subscription.id
+    );
+    const totalPoints = totalConsumptions.reduce(
+      (sum, cons) => sum + (cons.monthly_points || 0),
+      0
+    );
+
+    // 4. İNDİRİM TIER'LERİNİ AL
+    let discountTiers: DiscountTier[] = [];
+    
+    try {
+      if (Array.isArray(company.discount_tiers)) {
+        discountTiers = company.discount_tiers;
+      } else if (typeof company.discount_tiers === 'string') {
+        discountTiers = JSON.parse(company.discount_tiers);
+      }
+    } catch (error) {
+      console.warn(`Discount tiers parse hatası:`, error);
+    }
+    
+    // Default değerler
+    if (!discountTiers || discountTiers.length === 0) {
+      discountTiers = getDefaultDiscountTiers(company.name);
+    }
+
+    // 5. TIER'LERİ EN DÜŞÜK puan gereksinimine göre SIRALA (ASC)
+    const sortedTiers = [...discountTiers].sort((a, b) => a.min_points - b.min_points);
+
+    // 6. HANGİ TIER'DE OLDUĞUNU BUL
+    let currentTierIndex = -1;
+    let nextTierIndex = -1;
+    
+    // Hangi tier'de olduğunu bul (en düşükten başla)
+    for (let i = sortedTiers.length - 1; i >= 0; i--) {
+      if (monthlyPoints >= sortedTiers[i].min_points) {
+        currentTierIndex = i;
+        break;
+      }
+    }
+
+    // Eğer hiç uymuyorsa en düşük tier
+    if (currentTierIndex === -1) {
+      currentTierIndex = 0;
+    }
+
+    // Bir sonraki tier'i bul (varsa)
+    if (currentTierIndex < sortedTiers.length - 1) {
+      nextTierIndex = currentTierIndex + 1;
+    }
+
+    // 7. DEĞERLERİ AYARLA
+    const currentTier = sortedTiers[currentTierIndex];
+    let nextTier = nextTierIndex !== -1 ? sortedTiers[nextTierIndex] : null;
+
+    const currentDiscount = currentTier.discount_percent;
+    const currentTierName = currentTier.tier_name || `Seviye ${currentTierIndex + 1}`;
+    
+    let nextTierPoints = 0;
+    let nextTierDiscount = 0;
+    let nextTierName = "";
+    let progressPercent = 0;
+
+    if (nextTier) {
+      nextTierPoints = nextTier.min_points - monthlyPoints;
+      nextTierDiscount = nextTier.discount_percent;
+      nextTierName = nextTier.tier_name || `Seviye ${nextTierIndex + 1}`;
+      
+      // İlerleme yüzdesi: şu anki tier'den sonraki tier'e ne kadar kaldı
+      const currentRange = nextTier.min_points - currentTier.min_points;
+      if (currentRange > 0) {
+        const currentProgress = monthlyPoints - currentTier.min_points;
+        progressPercent = Math.round((currentProgress / currentRange) * 100);
+      }
+    } else {
+      // En yüksek tier'de, %100 ilerleme
+      progressPercent = 100;
+    }
+
+    // Progress sınırları
+    progressPercent = Math.min(100, Math.max(0, progressPercent));
+
+    console.log(`${company.name} - Tier: ${currentTierName}, İndirim: %${currentDiscount}, İlerleme: %${progressPercent}`);
+
+    discounts.push({
+      company_id: company.id,
+      company_name: company.name,
+      company_code: company.code,
+      utility_type: subscription.utility_type,
+      is_contracted: company.is_contracted || false,
+      monthly_points: monthlyPoints,
+      total_points: totalPoints,
+      current_discount: currentDiscount,
+      current_tier_name: currentTierName,
+      next_tier_points: nextTierPoints > 0 ? nextTierPoints : 0,
+      next_tier_discount: nextTierDiscount,
+      next_tier_name: nextTierName,
+      progress_percent: progressPercent,
+      discount_tiers: discountTiers,
+    });
+  }
+
+  console.log("Hesaplanan indirimler:", discounts);
   return discounts;
 };
 
@@ -2071,42 +2216,39 @@ const fetchDashboardData = async () => {
                   </div>
 
                   <div className="mb-3">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">
-                        {discount.current_tier_name}
-                        <span className="ml-2 text-gray-400">
-                          ({discount.monthly_points} puan)
-                        </span>
-                      </span>
-                      <span className="font-medium">
-                        Toplam: {discount.total_points} puan
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${
-                          discount.progress_percent > 50
-                            ? "bg-green-500"
-                            : "bg-yellow-500"
-                        }`}
-                        style={{ width: `${discount.progress_percent}%` }}
-                      ></div>
-                    </div>
-                  </div>
+      <div className="flex justify-between text-sm mb-1">
+        <span className="text-gray-600">
+          {discount.current_tier_name}
+          <span className="ml-2 text-gray-400">
+            ({discount.monthly_points} puan)
+          </span>
+        </span>
+        {discount.next_tier_points > 0 && (
+          <span className="text-sm text-green-600">
+            +{discount.next_tier_points} puan kala
+          </span>
+        )}
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className={`h-2 rounded-full transition-all ${
+            discount.progress_percent > 50
+              ? "bg-green-500"
+              : "bg-yellow-500"
+          }`}
+          style={{ width: `${discount.progress_percent}%` }}
+        ></div>
+      </div>
+    </div>
 
                   {discount.next_tier_points > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                          Sonraki seviye için:
-                        </span>
-                        <span className="text-sm font-semibold text-green-700">
-                          +{discount.next_tier_points} puan → %
-                          {discount.next_tier_discount}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+      <div className="mt-2 text-sm text-gray-600">
+        <span>Sonraki seviye: </span>
+        <span className="font-semibold text-green-700">
+          {discount.next_tier_name} (%{discount.next_tier_discount})
+        </span>
+      </div>
+    )}
                 </div>
               ))}
             </div>
